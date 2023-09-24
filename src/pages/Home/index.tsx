@@ -1,4 +1,6 @@
-import { Play, Watch } from "phosphor-react";
+import { Play } from "phosphor-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as zod from "zod";
 import {
   Countdowncontainer,
   FormContainer,
@@ -9,11 +11,47 @@ import {
   TaskInput,
 } from "./syles";
 import { useForm } from "react-hook-form";
-export function Home() {
-  const { register, handleSubmit, watch } = useForm();
+import { useState } from "react";
+interface inputValueProps {
+  task: string;
+  minutes: number;
+}
+interface cycle {
+  id: string;
+  task: string;
+  minutes: number;
+}
 
-  function getSubmitData(data: any) {
-    console.log(data, "test");
+export function Home() {
+  const [cycles, setCycles] = useState<cycle[]>([]);
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+
+  const newCycleFormValidationSchema = zod.object({
+    task: zod.string().min(1),
+    minutes: zod.number().min(5).max(60),
+  });
+
+  const { register, handleSubmit, watch, reset } = useForm<inputValueProps>({
+    resolver: zodResolver(newCycleFormValidationSchema),
+    defaultValues: {
+      task: "",
+      minutes: 0,
+    },
+  });
+
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  console.log(activeCycle);
+  function getSubmitData(data: inputValueProps) {
+    const id = String(new Date().getTime());
+    const newCycle: cycle = {
+      id,
+      task: data.task,
+      minutes: data.minutes,
+    };
+    setCycles((state) => [...state, newCycle]);
+    setActiveCycleId(id);
+    reset();
   }
   const task = watch("task");
   return (
